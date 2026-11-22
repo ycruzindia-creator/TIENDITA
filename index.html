@@ -96,7 +96,7 @@
       justify-content: space-between;
       align-items: center;
       box-shadow: 0 4px 22px rgba(0, 212, 255, 0.25);
-      overflow: hidden; /* Mantiene las monedas estrictamente dentro del header */
+      overflow: hidden;
     }
 
     .coin-rain {
@@ -479,6 +479,12 @@
       background: linear-gradient(135deg, #ff2a6d 0%, #c8104a 100%);
       color: #ffffff;
       box-shadow: 0 4px 15px rgba(255, 42, 109, 0.3);
+    }
+
+    .btn-telegram {
+      background: linear-gradient(135deg, #2aabee 0%, #229ed9 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(34, 158, 217, 0.35);
     }
 
     .btn-outline-blue {
@@ -1035,13 +1041,49 @@
     </div>
 
     <!-- ============================================================
-         PESTAÑA 5: EXPORTAR Y RESPALDO
+         PESTAÑA 5: EXPORTAR Y NUBE PRIVADA EN TELEGRAM
          ============================================================ -->
     <div id="tab-exportar" class="tab-content">
+
+      <!-- NUBE PRIVADA EN TELEGRAM (SIN LÍMITES Y PRIVADA EN ESTE TELÉFONO) -->
+      <div class="card" style="border-color: rgba(34, 158, 217, 0.55);">
+        <div class="card-title" style="color:#38bdf8;">✈️ Nube Privada en Telegram (Sin Límites)</div>
+        <p style="font-size:0.76rem; color:var(--text-muted); margin-bottom:12px;">
+          Tus llaves se guardan <strong>únicamente en este teléfono</strong> (nunca se suben a GitHub), por lo que solo vos tenés acceso a tus respaldos.
+        </p>
+
+        <div class="form-group">
+          <label>Token de tu Bot (@BotFather)</label>
+          <div class="input-with-btn">
+            <input type="password" id="tg-token" placeholder="Ej: 7845123490:AAH..." autocomplete="off">
+            <button type="button" class="mic-btn" onclick="toggleTokenVisibility()" title="Mostrar / Ocultar Token">👁️</button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Tu Chat ID Privado (@userinfobot)</label>
+          <input type="text" id="tg-chat-id" inputmode="numeric" placeholder="Ej: 123456789" autocomplete="off">
+        </div>
+
+        <button type="button" class="btn btn-outline-blue" style="margin-bottom:12px; padding:10px; font-size:0.78rem;" onclick="saveTelegramConfig()">
+          🔐 Guardar Llaves en este Teléfono
+        </button>
+
+        <div style="display:grid; grid-template-columns:1fr; gap:8px;">
+          <button type="button" class="btn btn-telegram" id="btn-tg-backup" onclick="backupToTelegram()">
+            ✈️ Guardar Respaldo en Telegram
+          </button>
+          <button type="button" class="btn btn-green" id="btn-tg-restore" onclick="restoreFromTelegram()">
+            🔄 Restaurar Último desde Telegram
+          </button>
+        </div>
+      </div>
+
+      <!-- REPORTES Y RESPALDO LOCAL -->
       <div class="card">
-        <div class="card-title">📤 Reportes y Copia de Seguridad</div>
+        <div class="card-title">📤 Reportes y Copia Local</div>
         <p style="font-size:0.78rem; color:var(--text-muted); margin-bottom:14px;">
-          Exportá el resumen general de cuentas, stock disponible y artículos más vendidos, o guardá una copia de seguridad completa.
+          Exportá el resumen general de cuentas o guardá un archivo de respaldo directo en la memoria de tu celular.
         </p>
 
         <button class="btn btn-green" style="margin-bottom:10px;" onclick="shareGeneralWhatsApp()">
@@ -1057,10 +1099,10 @@
         </button>
 
         <div style="border-top:1px dashed var(--border); padding-top:14px;">
-          <label style="margin-bottom:8px;">Respaldo de Base de Datos (.JSON)</label>
+          <label style="margin-bottom:8px;">Respaldo Manual en Teléfono (.JSON)</label>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-            <button type="button" class="btn btn-blue" style="font-size:0.75rem;" onclick="downloadBackupJSON()">💾 Guardar Copia</button>
-            <button type="button" class="btn btn-outline-blue" style="font-size:0.75rem;" onclick="document.getElementById('restore-file').click()">📂 Restaurar Copia</button>
+            <button type="button" class="btn btn-blue" style="font-size:0.75rem;" onclick="downloadBackupJSON()">💾 Guardar Archivo</button>
+            <button type="button" class="btn btn-outline-blue" style="font-size:0.75rem;" onclick="document.getElementById('restore-file').click()">📂 Cargar Archivo</button>
           </div>
           <input type="file" id="restore-file" accept=".json" style="display:none;" onchange="restoreBackupJSON(event)">
         </div>
@@ -1194,7 +1236,7 @@
     let inventory = JSON.parse(localStorage.getItem('mt_inventory') || '[]');
     let currentClientFilter = 'PENDING';
     let html5QrcodeScanner = null;
-    let scanMode = 'SEARCH'; // 'SEARCH' | 'INV_INPUT' | 'SALE_ADD'
+    let scanMode = 'SEARCH';
 
     function saveAllData() {
       localStorage.setItem('mt_sales', JSON.stringify(sales));
@@ -1392,7 +1434,6 @@
       return val % 1 === 0 ? val.toLocaleString('es-NI') : val.toLocaleString('es-NI', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     }
 
-    // Dictado por voz (convierte directo a MAYÚSCULAS)
     function startVoiceDictation(inputId, btnEl) {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
@@ -1497,7 +1538,6 @@
       enforceNumeric(qtyInp, false);
       enforceNumeric(priceInp, true);
 
-      // Si elige un artículo existente del inventario, autocompleta su precio sugerido si está vacío
       nameInp.addEventListener('change', () => {
         const match = inventory.find(i => i.name === nameInp.value.trim().toUpperCase());
         if (match && !priceInp.value) {
@@ -1559,9 +1599,7 @@
       return list;
     }
 
-    // Sincronización automática con Stock de Inventario Disponible
     function adjustInventoryStock(articlesList, factor) {
-      // factor = -1 al vender/agregar; factor = +1 al devolver/borrar
       articlesList.forEach(art => {
         const idx = inventory.findIndex(i => i.name.trim().toUpperCase() === art.name.trim().toUpperCase());
         if (idx !== -1) {
@@ -1606,14 +1644,12 @@
         createdAt: `${saleDate} ${saleTime}`
       };
 
-      // Descontar del inventario disponible
       adjustInventoryStock(articles, -1);
 
       sales.unshift(newSale);
       playCyberSound('action');
       saveAllData();
 
-      // Reset formulario
       document.getElementById('new-sale-form').reset();
       document.getElementById('sale-articles-container').innerHTML = '';
       addSaleArticleRow('sale-articles-container');
@@ -1874,7 +1910,6 @@
       const sale = sales.find(s => s.id === saleId);
       if (!sale) return;
 
-      // Reconciliar inventario: devolver stock anterior y descontar el nuevo
       adjustInventoryStock(sale.articles, +1);
       adjustInventoryStock(newArticles, -1);
 
@@ -1957,7 +1992,6 @@
         const id = parseInt(idRaw, 10);
         inventory = inventory.map(item => item.id === id ? { ...item, code, name, qty, minQty, cost, price } : item);
       } else {
-        // Si ya existe un artículo con el mismo nombre o código, preguntar si sumar stock
         const existing = inventory.find(i => i.name === name || (code && i.code === code));
         if (existing) {
           if (confirm(`El artículo "${existing.name}" ya existe con ${existing.qty} unidades. ¿Sumarle estas ${qty} unidades al stock actual?`)) {
@@ -2177,7 +2211,6 @@
         return;
       }
 
-      // Modo SEARCH desde encabezado
       if (invItem) {
         switchTab('inventario');
         document.getElementById('inv-search').value = invItem.name;
@@ -2205,7 +2238,153 @@
     }
 
     // =========================================================================
-    // 16. EXPORTACIÓN GENERAL Y COPIA DE SEGURIDAD (.JSON / .CSV)
+    // 16. NUBE PRIVADA EN TELEGRAM (SUBIR, FIJAR Y RESTAURAR SIN LÍMITES)
+    // =========================================================================
+    function loadTelegramConfig() {
+      document.getElementById('tg-token').value = localStorage.getItem('mt_tg_token') || '';
+      document.getElementById('tg-chat-id').value = localStorage.getItem('mt_tg_chat_id') || '';
+    }
+
+    function toggleTokenVisibility() {
+      const inp = document.getElementById('tg-token');
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+    }
+
+    function saveTelegramConfig() {
+      const token = document.getElementById('tg-token').value.trim();
+      const chatId = document.getElementById('tg-chat-id').value.trim();
+      if (!token || !chatId) {
+        alert('Ingresá tanto el Token de tu bot como tu Chat ID.');
+        return;
+      }
+      localStorage.setItem('mt_tg_token', token);
+      localStorage.setItem('mt_tg_chat_id', chatId);
+      playCyberSound('action');
+      alert('🔐 ¡Llaves guardadas de forma privada en este teléfono!');
+    }
+
+    async function backupToTelegram() {
+      const token = document.getElementById('tg-token').value.trim() || localStorage.getItem('mt_tg_token') || '';
+      const chatId = document.getElementById('tg-chat-id').value.trim() || localStorage.getItem('mt_tg_chat_id') || '';
+
+      if (!token || !chatId) {
+        alert('Primero pegá tu Token del Bot y tu Chat ID en las casillas de arriba.');
+        return;
+      }
+
+      localStorage.setItem('mt_tg_token', token);
+      localStorage.setItem('mt_tg_chat_id', chatId);
+
+      const btn = document.getElementById('btn-tg-backup');
+      const origText = btn.innerText;
+      btn.disabled = true;
+      btn.innerText = '⏳ Subiendo respaldo a Telegram...';
+
+      try {
+        const payload = {
+          app: 'Mi Tiendita',
+          exportedAt: `${getNowDateStr()} ${getNowTimeStr()}`,
+          sales,
+          inventory
+        };
+        const fileName = `Respaldo_Mi_Tiendita_${new Date().toISOString().slice(0, 10)}.json`;
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+
+        const formData = new FormData();
+        formData.append('chat_id', chatId);
+        formData.append('document', blob, fileName);
+        formData.append('caption', `🏪 Respaldo Mi Tiendita\n📅 ${payload.exportedAt}\n👥 Clientes: ${sales.length} | 📦 Bodega: ${inventory.length} art.`);
+
+        const res = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+          method: 'POST',
+          body: formData
+        });
+        const data = await res.json();
+
+        if (!data.ok) {
+          throw new Error(data.description || 'Telegram rechazó el envío.');
+        }
+
+        // Fijar automáticamente este respaldo en tu chat privado
+        const msgId = data.result.message_id;
+        await fetch(`https://api.telegram.org/bot${token}/pinChatMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            message_id: msgId,
+            disable_notification: true
+          })
+        });
+
+        playCyberSound('action');
+        alert('✅ ¡Respaldo guardado y fijado en tu chat privado de Telegram!');
+      } catch (err) {
+        alert('❌ No se pudo guardar en Telegram: ' + err.message + '\n\nRevisá tu conexión o confirmá que hayas presionado INICIAR (/start) dentro de tu bot en Telegram.');
+      } finally {
+        btn.disabled = false;
+        btn.innerText = origText;
+      }
+    }
+
+    async function restoreFromTelegram() {
+      const token = document.getElementById('tg-token').value.trim() || localStorage.getItem('mt_tg_token') || '';
+      const chatId = document.getElementById('tg-chat-id').value.trim() || localStorage.getItem('mt_tg_chat_id') || '';
+
+      if (!token || !chatId) {
+        alert('Ingresá tu Token del Bot y tu Chat ID para buscar tu respaldo.');
+        return;
+      }
+
+      const btn = document.getElementById('btn-tg-restore');
+      const origText = btn.innerText;
+      btn.disabled = true;
+      btn.innerText = '⏳ Buscando copia en Telegram...';
+
+      try {
+        const chatRes = await fetch(`https://api.telegram.org/bot${token}/getChat?chat_id=${encodeURIComponent(chatId)}`);
+        const chatData = await chatRes.json();
+        if (!chatData.ok) {
+          throw new Error(chatData.description || 'No se pudo conectar con tu chat.');
+        }
+
+        const pinned = chatData.result.pinned_message;
+        if (!pinned || !pinned.document) {
+          throw new Error('No hay ningún respaldo fijado en tu bot todavía. Guardá uno primero.');
+        }
+
+        const fileId = pinned.document.file_id;
+        const fileRes = await fetch(`https://api.telegram.org/bot${token}/getFile?file_id=${encodeURIComponent(fileId)}`);
+        const fileData = await fileRes.json();
+        if (!fileData.ok) {
+          throw new Error(fileData.description || 'No se pudo localizar el archivo en Telegram.');
+        }
+
+        const fileUrl = `https://api.telegram.org/file/bot${token}/${fileData.result.file_path}`;
+        const docRes = await fetch(fileUrl);
+        const backup = await docRes.json();
+
+        if (!Array.isArray(backup.sales) || !Array.isArray(backup.inventory)) {
+          throw new Error('El archivo encontrado no es un respaldo válido de Mi Tiendita.');
+        }
+
+        if (confirm(`Se encontró respaldo del ${backup.exportedAt || 'último guardado'} (${backup.sales.length} clientes y ${backup.inventory.length} artículos).\n\n¿Restaurar estos datos en la aplicación?`)) {
+          sales = backup.sales;
+          inventory = backup.inventory;
+          saveAllData();
+          playCyberSound('action');
+          alert('✅ ¡Todos tus clientes, abonos e inventario fueron restaurados desde Telegram!');
+        }
+      } catch (err) {
+        alert('❌ Error al restaurar desde Telegram: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerText = origText;
+      }
+    }
+
+    // =========================================================================
+    // 17. EXPORTACIÓN GENERAL Y COPIA LOCAL (.JSON / .CSV)
     // =========================================================================
     function shareGeneralWhatsApp() {
       let totalPendiente = 0;
@@ -2292,28 +2471,26 @@
     }
 
     // =========================================================================
-    // 17. INICIALIZACIÓN AL CARGAR LA APP
+    // 18. INICIALIZACIÓN AL CARGAR LA APP
     // =========================================================================
     document.addEventListener('DOMContentLoaded', () => {
       applySavedTheme();
       initHeaderGoldCoins();
+      loadTelegramConfig();
 
-      // Enlazar mayúsculas automáticas en buscadores y formularios
       document.querySelectorAll('.upper-input').forEach(enforceUppercase);
 
-      // Enlazar teclados numéricos estrictos
       enforceNumeric(document.getElementById('sale-prima'), true);
       enforceNumeric(document.getElementById('pay-amount'), true);
       enforceNumeric(document.getElementById('inv-qty'), false);
       enforceNumeric(document.getElementById('inv-min'), false);
       enforceNumeric(document.getElementById('inv-cost'), true);
       enforceNumeric(document.getElementById('inv-price'), true);
+      enforceNumeric(document.getElementById('tg-chat-id'), false);
 
-      // Máscaras de fecha DD/MM/AAAA
       applyDateMask(document.getElementById('sale-date'));
       applyDateMask(document.getElementById('pay-date'));
 
-      // Inicializar fila base en + Nueva Venta
       addSaleArticleRow('sale-articles-container');
 
       saveAllData();
@@ -2321,7 +2498,7 @@
   </script>
 
   <!-- =========================================================================
-       18. REGISTRO DEL SERVICE WORKER (Para Instalación de la App / PWA)
+       19. REGISTRO DEL SERVICE WORKER (Para Instalación de la App / PWA)
        ========================================================================= -->
   <script>
     if ('serviceWorker' in navigator) {
