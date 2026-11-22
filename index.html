@@ -8,6 +8,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>Mi Tiendita</title>
 
+  <!-- Enlace al archivo de configuración de PWA (Instalación) -->
+  <link rel="manifest" href="manifest.json">
+
   <!-- Librería del Escáner por Cámara -->
   <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -2316,9 +2319,11 @@
       saveAllData();
     });
   </script>
-</body>
+
+  <!-- =========================================================================
+       18. REGISTRO DEL SERVICE WORKER (Para Instalación de la App / PWA)
+       ========================================================================= -->
   <script>
-    // Registrar el Service Worker para permitir la instalación (PWA)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js')
@@ -2327,5 +2332,5 @@
       });
     }
   </script>
-
+</body>
 </html>
